@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AWCIS">
+<title>AWCIS | Safety Group Finder</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');
+:root {
+  --navy:#0d1b2a; --navy-mid:#1a2e45; --navy-light:#243b55;
+  --gold:#c9a84c; --gold-light:#e8c97a; --gold-pale:#fdf6e3;
+  --cream:#f5f1ea; --white:#ffffff;
+  --green:#1a6b45; --green-light:#e8f5ee;
+  --red:#8b1a1a; --gray:#6b7a8d; --gray-light:#f0ece4;
+  --border:#ddd5c8; --shadow:0 2px 14px rgba(13,27,42,0.10);
+  --radius:14px; --tab-h:60px; --header-h:54px;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--cream);color:var(--navy);height:100%;overscroll-behavior:none;}
+
+/* HEADER */
+.header{position:fixed;top:0;left:0;right:0;height:var(--header-h);background:var(--navy);display:flex;align-items:center;padding:0 16px;gap:10px;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,0.3);}
+.hlogo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--gold);flex-shrink:0;}
+.hdiv{width:1px;height:20px;background:rgba(201,168,76,0.3);flex-shrink:0;}
+.hsub{font-size:10px;color:rgba(255,255,255,0.45);line-height:1.35;flex:1;}
+.hbadge{background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);color:var(--gold-light);font-size:8.5px;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+
+/* BOTTOM TAB BAR */
+.tab-bar{position:fixed;bottom:0;left:0;right:0;background:var(--navy);display:flex;align-items:flex-start;padding-top:8px;padding-bottom:var(--safe-bottom);z-index:200;border-top:1px solid rgba(255,255,255,0.07);}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:2px 2px 0;cursor:pointer;}
+.tab-item:active{opacity:0.6;}
+.tab-icon{font-size:19px;line-height:1;}
+.tab-lbl{font-size:8.5px;font-weight:600;color:rgba(255,255,255,0.38);text-align:center;line-height:1.2;}
+.tab-item.active .tab-lbl{color:var(--gold-light);}
+.tab-dot{width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:0;margin-top:2px;}
+.tab-item.active .tab-dot{opacity:1;}
+
+/* SCREENS */
+.screen{display:none;position:fixed;top:var(--header-h);left:0;right:0;bottom:calc(var(--tab-h) + var(--safe-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 8px;}
+.screen.active{display:block;}
+
+/* SCREEN TITLES */
+.stitle{font-family:'DM Serif Display',serif;font-size:21px;color:var(--navy);margin-bottom:3px;}
+.ssub{font-size:12px;color:var(--gray);margin-bottom:14px;line-height:1.5;}
+
+/* CARDS */
+.card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px;}
+.card-hd{background:var(--navy);padding:11px 15px;}
+.card-hd h3{font-family:'DM Serif Display',serif;font-size:14px;color:var(--gold-light);font-weight:400;}
+.card-hd .chsub{font-size:10.5px;color:rgba(255,255,255,0.4);margin-top:2px;}
+.card-bd{padding:14px 15px;}
+
+/* FIELDS */
+.ifield{margin-bottom:13px;}
+.ifield:last-child{margin-bottom:0;}
+.ifield label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gray);margin-bottom:5px;}
+.ifield input,.ifield select,.ifield textarea{width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-family:'Inter',sans-serif;color:var(--navy);background:var(--cream);outline:none;-webkit-appearance:none;transition:border-color .2s;}
+.ifield input:focus,.ifield select:focus,.ifield textarea:focus{border-color:var(--gold);background:var(--white);}
+.ifield textarea{resize:none;min-height:80px;line-height:1.5;}
+.ifield select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7a8d' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px;}
+.ifield .fnote{font-size:11px;color:var(--gray);margin-top:5px;line-height:1.5;}
+.mono-in{font-family:'DM Mono',monospace !important;font-size:18px !important;letter-spacing:.05em;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* RADIO BUTTONS */
+.rgroup{display:flex;gap:8px;}
+.rbtn{flex:1;padding:11px 6px;border:1.5px solid var(--border);border-radius:10px;text-align:center;font-size:14px;font-weight:500;color:var(--gray);cursor:pointer;background:var(--cream);transition:all .15s;}
+.rbtn.on{border-color:var(--gold);background:var(--gold-pale);color:var(--navy);font-weight:700;}
+
+/* STATUS BAR */
+.status-bar{border-radius:12px;padding:12px 15px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.status-bar.neutral{background:var(--white);border-left:4px solid var(--border);color:var(--gray);box-shadow:var(--shadow);}
+.status-bar.success{background:var(--green-light);border-left:4px solid var(--green);color:var(--green);}
+.status-bar.error{background:#fdf0f0;border-left:4px solid var(--red);color:var(--red);}
+
+/* GROUP RESULT CARDS */
+.gcard{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px;animation:fu .25s ease both;}
+@keyframes fu{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:translateY(0);}}
+.gcard-top{background:linear-gradient(135deg,var(--navy),var(--navy-light));padding:13px 15px;display:flex;align-items:flex-start;gap:11px;}
+.gnum{font-family:'DM Mono',monospace;font-size:21px;color:var(--gold);font-weight:500;flex-shrink:0;line-height:1;margin-top:2px;}
+.gname{font-family:'DM Serif Display',serif;font-size:16px;color:var(--white);line-height:1.2;}
+.gann{font-size:10.5px;color:rgba(255,255,255,0.42);margin-top:3px;}
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 14px;background:var(--gray-light);}
+.mtile{background:var(--white);border-radius:10px;padding:9px 11px;text-align:center;}
+.mlbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--gray);font-weight:600;margin-bottom:3px;}
+.mval{font-family:'DM Mono',monospace;font-size:19px;font-weight:500;color:var(--navy);line-height:1;}
+.mval.green{color:var(--green);}
+.msub{font-size:9.5px;color:var(--gray);margin-top:2px;}
+.gfoot{padding:12px 15px;display:flex;flex-direction:column;gap:10px;}
+.savings-box{background:var(--green-light);border:1px solid #b8dfc9;border-radius:10px;padding:12px 13px;}
+.stitle2{font-size:11.5px;color:var(--green);font-weight:700;margin-bottom:8px;}
+.srow{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+.srow-lbl{font-size:12px;color:var(--green);}
+.srow-val{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--green);}
+.stotal{border-top:1px solid #b8dfc9;padding-top:8px;margin-top:8px;}
+.sdisclaimer{margin-top:9px;padding-top:9px;border-top:1px solid #b8dfc9;font-size:10.5px;color:#2d6b4a;line-height:1.55;display:flex;gap:6px;}
+.codes-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray);margin-bottom:6px;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{font-family:'DM Mono',monospace;font-size:12px;background:var(--navy);color:var(--gold-light);padding:4px 10px;border-radius:6px;font-weight:500;}
+.chip.hit{background:var(--green);color:var(--white);}
+.start-btn{width:100%;background:var(--navy);color:var(--gold-light);border:none;border-radius:12px;padding:14px 16px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
+.start-btn:active{background:var(--navy-light);}
+
+/* INFO STRIP */
+.info-strip{background:var(--navy);border-radius:12px;padding:11px 14px;color:rgba(255,255,255,.65);font-size:11.5px;margin-bottom:14px;line-height:1.8;}
+.info-strip strong{color:var(--gold-light);}
+
+/* MATRIX CARDS */
+.mxcard{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:10px;}
+.mxhd{background:linear-gradient(135deg,var(--navy),var(--navy-light));padding:11px 14px;display:flex;align-items:center;gap:10px;}
+.mxnum{font-family:'DM Mono',monospace;font-size:17px;color:var(--gold);font-weight:500;flex-shrink:0;}
+.mxname{font-family:'DM Serif Display',serif;font-size:13px;color:var(--white);flex:1;line-height:1.25;}
+.mxann{font-size:9.5px;color:rgba(255,255,255,.38);flex-shrink:0;}
+.mxstats{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--border);}
+.mxst{padding:9px 8px;text-align:center;border-right:1px solid var(--border);}
+.mxst:last-child{border-right:none;}
+.mxst-lbl{font-size:8.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--gray);font-weight:600;margin-bottom:2px;}
+.mxst-val{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--navy);}
+.mxst-val.green{color:var(--green);}
+.mxcodes{padding:9px 13px;font-family:'DM Mono',monospace;font-size:11px;color:var(--gray);line-height:1.9;}
+
+/* HISTORY */
+.hxcard{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:10px;}
+.hxhd{background:var(--navy-mid);padding:11px 14px;display:flex;align-items:center;gap:10px;}
+.hxnum{font-family:'DM Mono',monospace;font-size:17px;color:var(--gold);font-weight:500;}
+.hxname{font-family:'DM Serif Display',serif;font-size:13px;color:var(--white);flex:1;line-height:1.25;}
+.hxann{font-size:9.5px;color:rgba(255,255,255,.38);flex-shrink:0;}
+.hxbody{padding:10px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.htable{width:100%;border-collapse:collapse;font-size:11.5px;min-width:320px;}
+.htable th{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray);padding:4px 7px;text-align:center;}
+.htable th:first-child{text-align:left;}
+.htable td{padding:5px 7px;text-align:center;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px;}
+.htable td:first-child{text-align:left;font-family:'Inter',sans-serif;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray);}
+.hdisc{background:#e8f0fe;color:#1a3a8b;}
+.hdiv{background:var(--green-light);color:var(--green);}
+.htbd{background:var(--gray-light);color:var(--gray);}
+
+/* REF SEARCH */
+.ref-item{background:var(--white);border-radius:10px;padding:11px 13px;margin-bottom:7px;box-shadow:0 1px 6px rgba(13,27,42,.07);display:flex;align-items:center;gap:11px;}
+.rcode{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;background:var(--navy);color:var(--gold-light);padding:5px 9px;border-radius:7px;flex-shrink:0;min-width:50px;text-align:center;}
+.rinfo{flex:1;min-width:0;}
+.rdesc{font-size:13px;font-weight:500;color:var(--navy);margin-bottom:2px;}
+.rgrp{font-size:10.5px;color:var(--gray);}
+.rcount{font-size:12px;color:var(--gray);margin-bottom:10px;}
+
+/* INTAKE */
+.intake-section{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px;}
+.intake-hd{background:var(--navy);padding:11px 15px;}
+.intake-hd h3{font-family:'DM Serif Display',serif;font-size:14px;color:var(--gold-light);font-weight:400;}
+.intake-bd{padding:14px 15px;display:flex;flex-direction:column;gap:13px;}
+
+/* DATA TABLES */
+.dtable{width:100%;border-collapse:collapse;font-size:12px;}
+.dtable th{background:var(--navy-light);color:rgba(255,255,255,.7);font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:8px 8px;text-align:left;white-space:nowrap;}
+.dtable td{padding:5px 5px;border-bottom:1px solid var(--border);}
+.dtable tr:last-child td{border-bottom:none;}
+.dtable input,.dtable select{width:100%;padding:6px 7px;border:1.5px solid var(--border);border-radius:5px;font-size:13px;font-family:'Inter',sans-serif;background:var(--cream);color:var(--navy);outline:none;-webkit-appearance:none;}
+.dtable input:focus,.dtable select:focus{border-color:var(--gold);background:var(--white);}
+.add-row-btn{background:none;border:1.5px dashed var(--border);border-radius:8px;padding:8px 14px;font-size:12px;color:var(--gray);cursor:pointer;font-family:'Inter',sans-serif;margin-top:6px;width:100%;}
+
+/* SUBMIT CARD */
+.submit-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 15px;margin-bottom:12px;}
+.submit-card h4{font-family:'DM Serif Display',serif;font-size:16px;color:var(--navy);margin-bottom:5px;}
+.submit-card p{font-size:12px;color:var(--gray);line-height:1.6;margin-bottom:12px;}
+.step-box{background:var(--cream);border:1.5px solid var(--border);border-radius:10px;padding:12px 13px;margin-bottom:8px;}
+.step-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:6px;}
+.step-note{font-size:11px;color:var(--gray);margin-top:6px;line-height:1.5;}
+.btn-navy{width:100%;background:var(--navy);color:var(--gold-light);border:none;border-radius:11px;padding:14px 16px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s;}
+.btn-navy:active{background:var(--navy-light);}
+.btn-gold{width:100%;background:var(--gold);color:var(--navy);border:none;border-radius:11px;padding:14px 16px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s;}
+.btn-gold:active{background:var(--gold-light);}
+
+/* CHECKLIST */
+.checklist{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+.chk-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--navy);cursor:pointer;}
+.chk-item input{accent-color:var(--gold);width:17px;height:17px;flex-shrink:0;margin-top:1px;}
+
+/* CONTACT CARD */
+.contact-card{background:var(--navy);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px;}
+.cc-hd{background:linear-gradient(135deg,#0d1b2a,#1a3a5c);padding:16px 16px 13px;border-bottom:1px solid rgba(201,168,76,.22);}
+.cc-acr{font-size:9.5px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+.cc-name{font-family:'DM Serif Display',serif;font-size:20px;color:var(--white);line-height:1.15;margin-bottom:2px;}
+.cc-title{font-size:11.5px;color:rgba(255,255,255,.5);line-height:1.45;}
+.cc-bd{padding:14px 16px;display:flex;flex-direction:column;gap:11px;}
+.cc-row{display:flex;align-items:flex-start;gap:10px;}
+.cc-icon{font-size:15px;flex-shrink:0;margin-top:1px;}
+.cc-text{font-size:12.5px;color:rgba(255,255,255,.68);line-height:1.5;}
+.cc-text a{color:var(--gold-light);text-decoration:none;}
+
+/* EMAIL MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(13,27,42,.7);z-index:500;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--white);border-radius:20px 20px 0 0;width:100%;max-height:88vh;display:flex;flex-direction:column;animation:slideUp .25s ease both;}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-hd{background:var(--navy);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-radius:20px 20px 0 0;}
+.modal-hd h3{font-family:'DM Serif Display',serif;font-size:16px;color:var(--gold-light);font-weight:400;}
+.modal-close{background:none;border:none;color:rgba(255,255,255,.5);font-size:24px;cursor:pointer;line-height:1;padding:0 2px;}
+.modal-body{padding:16px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}
+.modal-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.mm-item label{display:block;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray);margin-bottom:2px;}
+.mm-item span{font-size:12px;color:var(--navy);font-family:'DM Mono',monospace;}
+.attach-warn{background:#fff3cd;border:1.5px solid #f0c040;border-radius:10px;padding:11px 13px;margin-bottom:12px;font-size:12px;color:#7a5a00;line-height:1.55;display:flex;gap:8px;align-items:flex-start;}
+.email-preview{background:var(--cream);border:1.5px solid var(--border);border-radius:10px;padding:14px;font-size:12px;line-height:1.7;color:var(--navy);white-space:pre-wrap;font-family:'Inter',sans-serif;}
+.modal-actions{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);background:var(--cream);padding-bottom:calc(12px + var(--safe-bottom));}
+.modal-btn-p{flex:1;background:var(--navy);color:var(--gold-light);border:none;border-radius:10px;padding:13px 10px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;}
+.modal-btn-s{background:none;border:1.5px solid var(--border);border-radius:10px;padding:13px 14px;font-size:13px;font-weight:500;font-family:'Inter',sans-serif;color:var(--gray);cursor:pointer;}
+.copied{font-size:11.5px;color:var(--green);align-self:center;opacity:0;transition:opacity .3s;white-space:nowrap;}
+.copied.show{opacity:1;}
+
+/* PREFILL TOAST */
+.toast{position:fixed;top:calc(var(--header-h) + 10px);left:50%;transform:translateX(-50%);background:var(--green);color:var(--white);padding:10px 18px;border-radius:30px;font-size:12.5px;font-weight:600;z-index:300;box-shadow:0 4px 16px rgba(0,0,0,.2);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .3s;}
+.toast.show{opacity:1;}
+
+/* DISCLAIMER BOX */
+.disc-box{background:var(--gold-pale);border:1px solid #e8d8a0;border-radius:10px;padding:11px 13px;font-size:11.5px;color:#6b5500;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="hlogo">AWCIS</div>
+  <div class="hdiv"></div>
+  <div class="hsub">NYS Safety Group Finder<br>Workers Comp · New York</div>
+  <div class="hbadge">NYSIF LCM 1.27</div>
+</header>
+
+<!-- SCREENS -->
+
+<!-- 1. GROUP FINDER -->
+<div class="screen active" id="sc-finder">
+  <div class="stitle">Group Finder</div>
+  <div class="ssub">Enter a class code to find eligible Safety Groups.</div>
+
+  <div class="card">
+    <div class="card-hd"><h3>⚙ Submission Inputs</h3></div>
+    <div class="card-bd">
+      <div class="ifield">
+        <label>Business Type</label>
+        <select id="sel-biz" onchange="onBizChange()">
+          <option value="">— Select or enter code below —</option>
+          <option value="9026">Property Manager / Building Owner</option>
+          <option value="9028">Residential Landlord</option>
+          <option value="9026">Commercial Real Estate</option>
+          <option value="0042">Nursery / Landscaping</option>
+          <option value="0035">Florist / Garden Center</option>
+          <option value="0106">Tree Service / Arborist</option>
+          <option value="8385">Ambulette / Medical Transport</option>
+          <option value="8394">Bus Company / Para-Transit</option>
+          <option value="3629">Light Manufacturer</option>
+          <option value="3632">Machine Shop / Metal Fabrication</option>
+          <option value="3113">Tool / Hardware Manufacturer</option>
+          <option value="5183">Plumbing Contractor</option>
+          <option value="5536">HVAC / Sheet Metal Contractor</option>
+          <option value="5188">Sprinkler / Fire Protection</option>
+          <option value="8391">Auto Dealer (New/Used)</option>
+          <option value="8391">Auto Body / Repair Shop</option>
+          <option value="8391">Gas Station / Tire Dealer</option>
+          <option value="7219">Trucking / Local Delivery</option>
+          <option value="8292">Warehouse / Storage</option>
+          <option value="7231">Messenger / Courier Service</option>
+          <option value="9403">Sanitation / Garbage Collection</option>
+          <option value="8263">Recycling / Junk Dealer</option>
+          <option value="8264">Paper / Scrap Dealer</option>
+          <option value="5190">Electrical Contractor</option>
+          <option value="7538">Telecom / Utility Line Work</option>
+          <option value="5160">Elevator Contractor</option>
+          <option value="9519">Appliance Repair</option>
+          <option value="8017">Retail Store (General)</option>
+          <option value="8018">Wholesale Distribution</option>
+          <option value="2501">Apparel / Clothing Manufacturer</option>
+          <option value="5184">Steam / Boiler Installation</option>
+          <option value="5193">Oil or Gas Burner Service</option>
+          <option value="5538">Sheet Metal Contractor</option>
+          <option value="3726">Boiler / Tank Installation &amp; Repair</option>
+          <option value="7197">Courier / Package Delivery</option>
+          <option value="8293">Furniture Storage Warehouse</option>
+          <option value="8265">Iron or Steel Dealer / Scrap Metal</option>
+          <option value="8103">Clipping / Paper Stock Dealer</option>
+          <option value="7590">Waste Reduction / Incineration</option>
+          <option value="4239">Paper Manufacturing</option>
+          <option value="2211">Cotton / Textile Waste Mfg</option>
+          <option value="8032">Clothing / Apparel Retail Store</option>
+          <option value="2688">Leather Goods Manufacturer</option>
+          <option value="7601">Fire Alarm / Telecom Line Construction</option>
+          <option value="9549">Outdoor Advertising</option>
+          <option value="9402">Street or Sewer Cleaning</option>
+          <option value="8350">Gasoline / Oil Dealer</option>
+          <option value="8111">Plumbing Supply Dealer</option>
+          <option value="">Other (enter code manually below)</option>
+        </select>
+      </div>
+      <div class="ifield">
+        <label>Primary / Governing Class Code</label>
+        <input type="number" id="inp-code" class="mono-in" placeholder="e.g. 9403" inputmode="numeric" pattern="[0-9]*" maxlength="4" oninput="runFinder()">
+        <div class="fnote">⚑ Governing = highest payroll class. Cannot be 8810, 8742, or 8809.</div>
+      </div>
+      <div class="ifield">
+        <label>Est. Annual Premium ($)</label>
+        <input type="number" id="inp-prem" placeholder="e.g. 15000" inputmode="numeric" oninput="runFinder()">
+        <div class="fnote">Min. premium: $2,500 · NYSIF only (LCM 1.27)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-bar neutral" id="status-bar">
+    <span>◈</span><span>Enter a class code above to find eligible Safety Groups.</span>
+  </div>
+  <div id="results"></div>
+</div>
+
+<!-- 2. GROUP MATRIX -->
+<div class="screen" id="sc-matrix">
+  <div class="stitle">Group Matrix</div>
+  <div class="ssub">All 10 managed NYS Safety Groups.</div>
+  <div class="info-strip">
+    🏛 <strong>Carrier:</strong> NYSIF only &nbsp;·&nbsp;
+    📐 <strong>LCM:</strong> 1.27 (eff. 2025) &nbsp;·&nbsp;
+    💵 <strong>Min Premium:</strong> $2,500
+  </div>
+  <div id="matrix-list"></div>
+</div>
+
+<!-- 3. HISTORY -->
+<div class="screen" id="sc-history">
+  <div class="stitle">Dividend History</div>
+  <div class="ssub">Discount &amp; dividend history 2020–2026. Swipe cards to scroll years.</div>
+  <div id="history-list"></div>
+</div>
+
+<!-- 4. CLASS CODES -->
+<div class="screen" id="sc-ref">
+  <div class="stitle">Class Codes</div>
+  <div class="ssub">Search by code or description.</div>
+  <input type="search" class="search-bar" id="ref-search" placeholder="🔍  Search codes…" oninput="filterRef()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <div class="rcount" id="ref-count"></div>
+  <div id="ref-list"></div>
+</div>
+
+<!-- 5. INTAKE -->
+<div class="screen" id="sc-intake">
+  <div class="stitle">New Business Intake</div>
+  <div class="ssub">All items must be completed. Submit to <a href="mailto:nysafetygroupsubmissions@acrisure.com" style="color:var(--navy);font-weight:600;">nysafetygroupsubmissions@acrisure.com</a></div>
+
+  <!-- Contact Card -->
+  <div class="contact-card">
+    <div class="cc-hd">
+      <div class="cc-acr">Acrisure · Placement Contact</div>
+      <div class="cc-name">Riyadh Sawh</div>
+      <div class="cc-title">Manager – Carrier Placement<br>Workers Compensation Insurance Solutions LLC</div>
+    </div>
+    <div class="cc-bd">
+      <div class="cc-row"><div class="cc-icon">📍</div><div class="cc-text">300 Linden Oaks, Suite 210<br>Rochester, NY 14625</div></div>
+      <div class="cc-row"><div class="cc-icon">📞</div><div class="cc-text"><a href="tel:5854855864" class="cc-text" style="color:var(--gold-light);">585-485-5864</a></div></div>
+      <div class="cc-row"><div class="cc-icon">✉️</div><div class="cc-text"><a href="mailto:nysafetygroupsubmissions@acrisure.com">nysafetygroupsubmissions@acrisure.com</a></div></div>
+    </div>
+  </div>
+
+  <!-- Producer -->
+  <div class="intake-section">
+    <div class="intake-hd"><h3>Producer Data</h3></div>
+    <div class="intake-bd">
+      <div class="ifield"><label>Primary Producer</label><input type="text" id="if-producer" placeholder="Full name" autocomplete="name"></div>
+      <div class="ifield"><label>Primary Producer Commission (%)</label><input type="number" id="if-commission" placeholder="0" min="0" max="100" inputmode="decimal"></div>
+      <div class="ifield"><label>Secondary Producer</label><input type="text" placeholder="Full name (if applicable)"></div>
+      <div class="ifield"><label>Secondary Producer Commission (%)</label><input type="number" placeholder="0" min="0" max="100" inputmode="decimal"></div>
+      <div class="ifield">
+        <label>Currently control this account?</label>
+        <div class="rgroup">
+          <div class="rbtn" onclick="toggleRadio(this,'ctrl-yes','ctrl-no')">Yes</div>
+          <div class="rbtn" onclick="toggleRadio(this,'ctrl-no','ctrl-yes')">No</div>
+        </div>
+        <input type="hidden" id="ctrl-yes" value=""><input type="hidden" id="ctrl-no" value="">
+      </div>
+      <div class="ifield"><label>Markets previously approached</label><textarea placeholder="List all markets…"></textarea></div>
+    </div>
+  </div>
+
+  <!-- Broker -->
+  <div class="intake-section">
+    <div class="intake-hd"><h3>Broker Data <span style="font-size:11px;opacity:.5">(if applicable)</span></h3></div>
+    <div class="intake-bd">
+      <div class="ifield"><label>Broker Agency</label><input type="text" placeholder="Agency name"></div>
+      <div class="ifield"><label>Broker Contact (name, email, phone, relationship)</label><textarea placeholder="Full contact details…"></textarea></div>
+      <div class="ifield">
+        <label>Broker appointed with Acrisure?</label>
+        <div class="rgroup">
+          <div class="rbtn" onclick="toggleRadio(this,'bappt-y','bappt-n')">Yes</div>
+          <div class="rbtn" onclick="toggleRadio(this,'bappt-n','bappt-y')">No</div>
+        </div>
+        <input type="hidden" id="bappt-y" value=""><input type="hidden" id="bappt-n" value="">
+      </div>
+    </div>
+  </div>
+
+  <!-- Client -->
+  <div class="intake-section">
+    <div class="intake-hd"><h3>Client / Submission Data</h3></div>
+    <div class="intake-bd">
+      <div class="ifield"><label>Business Name</label><input type="text" id="if-bizname" placeholder="Legal business name" autocomplete="organization"></div>
+      <div class="ifield"><label>Business Type</label>
+        <select><option value="">— Select —</option><option>Corp</option><option>LLC</option><option>LP</option><option>LLP</option><option>Sole Proprietor</option><option>Partnership</option><option>Other</option></select>
+      </div>
+      <div class="ifield"><label>Federal Tax ID / SSN</label><input type="text" id="if-fein" placeholder="XX-XXXXXXX" inputmode="numeric"></div>
+      <div class="ifield"><label>Requested Effective Date</label><input type="date" id="if-effdate"></div>
+      <div class="ifield"><label>Mailing Address</label><input type="text" placeholder="Street, City, State, ZIP" autocomplete="street-address"></div>
+      <div class="ifield"><label>Physical Address</label><input type="text" placeholder="If same as mailing, write 'Same'"></div>
+      <div class="ifield"><label>Additional Entities (name + FEIN)</label><textarea placeholder="List any additional entities…" style="min-height:60px"></textarea></div>
+      <div class="ifield">
+        <label>Experience Mod</label>
+        <input type="text" id="if-expmod" placeholder="e.g. 0.81" inputmode="decimal">
+        <div class="fnote">5 years of currently valued loss runs required for all submissions.</div>
+      </div>
+      <div class="row2">
+        <div class="ifield"><label>Years in Business</label><input type="number" id="if-years" placeholder="e.g. 10" inputmode="numeric"></div>
+        <div class="ifield"><label>Newly formed?</label>
+          <div class="rgroup" style="margin-top:2px">
+            <div class="rbtn" onclick="toggleRadio(this,'nfb-y','nfb-n')">Yes</div>
+            <div class="rbtn" onclick="toggleRadio(this,'nfb-n','nfb-y')">No</div>
+          </div>
+        </div>
+      </div>
+      <div class="ifield"><label>Business Phone</label><input type="tel" id="if-phone" placeholder="(XXX) XXX-XXXX" autocomplete="tel"></div>
+      <div class="ifield"><label>Business Email</label><input type="email" id="if-email" placeholder="contact@business.com" autocomplete="email" inputmode="email"></div>
+      <div class="ifield">
+        <label>Subcontractors / 1099 / Independent Contractors?</label>
+        <div class="rgroup">
+          <div class="rbtn" onclick="toggleRadio(this,'sub-y','sub-n')">Yes</div>
+          <div class="rbtn" onclick="toggleRadio(this,'sub-n','sub-y')">No</div>
+        </div>
+      </div>
+      <div class="ifield">
+        <label>Lease employees to/from other employers?</label>
+        <div class="rgroup">
+          <div class="rbtn" onclick="toggleRadio(this,'lease-y','lease-n')">Yes</div>
+          <div class="rbtn" onclick="toggleRadio(this,'lease-n','lease-y')">No</div>
+        </div>
+      </div>
+      <div class="ifield"><label>Description of Business Operations</label><textarea id="if-ops" placeholder="Describe all operations in detail…" style="min-height:100px"></textarea></div>
+    </div>
+  </div>
+
+  <!-- Endorsements -->
+  <div class="intake-section">
+    <div class="intake-hd"><h3>Special Endorsements</h3></div>
+    <div class="intake-bd">
+      <div class="ifield">
+        <label>Blanket Waiver of Subrogation?</label>
+        <div class="rgroup">
+          <div class="rbtn" onclick="toggleRadio(this,'wsub-y','wsub-n')">Yes</div>
+          <div class="rbtn" onclick="toggleRadio(this,'wsub-n','wsub-y')">No</div>
+        </div>
+      </div>
+      <div class="ifield">
+        <label>Telecommuter Endorsement (WFH employees)?</label>
+        <div class="rgroup">
+          <div class="rbtn" onclick="toggleRadio(this,'tele-y','tele-n')">Yes</div>
+          <div class="rbtn" onclick="toggleRadio(this,'tele-n','tele-y')">No</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ownership -->
+  <div class="intake-section">
+    <div class="intake-hd"><h3>Ownership Data</h3><div class="chsub">Subject to further questioning re: % owned</div></div>
+    <div class="intake-bd">
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <table class="dtable">
+          <thead><tr><th>Name</th><th>Title</th><th>Email</th><th>Phone</th><th>Salary</th><th>Status</th></tr></thead>
+          <tbody id="own-body"></tbody>
+        </table>
+      </div>
+      <button class="add-row-btn" onclick="addOwner()">+ Add Owner</button>
+    </div>
+  </div>
+
+  <!-- Payroll -->
+  <div class="intake-section">
+    <div class="intake-hd"><h3>Payroll Data</h3></div>
+    <div class="intake-bd">
+      <div class="disc-box">
+        <strong>Below $100K premium:</strong> Most recent WC audit or 4 quarters of NYS45s.<br>
+        <strong>Above $100K premium:</strong> Last 4 available WC audits or NYS45s.
+      </div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <table class="dtable">
+          <thead><tr><th>Code</th><th>Job Description</th><th>Est. Payroll</th><th># EEs</th></tr></thead>
+          <tbody id="pay-body"></tbody>
+        </table>
+      </div>
+      <button class="add-row-btn" onclick="addPayroll()">+ Add Class Code</button>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="submit-card">
+    <h4>Submit Completed Form</h4>
+    <p>Follow both steps to send your submission.</p>
+    <div class="step-box">
+      <div class="step-label">Step 1</div>
+      <button class="btn-gold" onclick="doShare()">🖨 Save / Share as PDF</button>
+      <div class="step-note">Tap to save a PDF of this form using your iPhone's share sheet. This is the file you'll attach to the email.</div>
+    </div>
+    <div class="step-box">
+      <div class="step-label">Step 2</div>
+      <button class="btn-navy" onclick="generateEmail()">✉ Generate Submission Email</button>
+      <div class="step-note">Generates a pre-addressed email draft. Attach the PDF from Step 1 before sending.</div>
+    </div>
+  </div>
+
+  <!-- Checklist -->
+  <div class="submit-card">
+    <h4>Submission Checklist</h4>
+    <div class="checklist">
+      <label class="chk-item"><input type="checkbox"> Completed intake form</label>
+      <label class="chk-item"><input type="checkbox"> 5 years currently valued loss runs</label>
+      <label class="chk-item"><input type="checkbox"> WC audits or NYS45s (per threshold)</label>
+      <label class="chk-item"><input type="checkbox"> Description of operations</label>
+      <label class="chk-item"><input type="checkbox"> Ownership data completed</label>
+      <label class="chk-item"><input type="checkbox"> Payroll by class code</label>
+      <label class="chk-item"><input type="checkbox"> Markets previously approached listed</label>
+    </div>
+  </div>
+
+  <div style="height:10px;"></div>
+</div>
+
+<!-- BOTTOM TAB BAR -->
+<nav class="tab-bar">
+  <div class="tab-item active" onclick="showTab('finder',this)">
+    <div class="tab-icon">🔍</div>
+    <div class="tab-lbl">Finder</div>
+    <div class="tab-dot"></div>
+  </div>
+  <div class="tab-item" onclick="showTab('matrix',this)">
+    <div class="tab-icon">📊</div>
+    <div class="tab-lbl">Matrix</div>
+    <div class="tab-dot"></div>
+  </div>
+  <div class="tab-item" onclick="showTab('history',this)">
+    <div class="tab-icon">📈</div>
+    <div class="tab-lbl">History</div>
+    <div class="tab-dot"></div>
+  </div>
+  <div class="tab-item" onclick="showTab('ref',this)">
+    <div class="tab-icon">📋</div>
+    <div class="tab-lbl">Codes</div>
+    <div class="tab-dot"></div>
+  </div>
+  <div class="tab-item" onclick="showTab('intake',this)">
+    <div class="tab-icon">📝</div>
+    <div class="tab-lbl">Intake</div>
+    <div class="tab-dot"></div>
+  </div>
+</nav>
+
+<!-- EMAIL MODAL -->
+<div class="modal-overlay" id="email-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3>✉ Submission Email Draft</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-meta" id="modal-meta"></div>
+      <div class="attach-warn"><span style="font-size:16px;flex-shrink:0">📎</span><span><strong>Remember to attach your PDF before sending.</strong> Save the form first using Step 1, then attach it in your mail app.</span></div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray);margin-bottom:7px;">Email Body Preview</div>
+      <div class="email-preview" id="email-preview"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn-p" onclick="openMail()">📨 Open in Mail</button>
+      <button class="modal-btn-s" onclick="copyEmail()">📋 Copy</button>
+      <span class="copied" id="copied-flash">Copied!</span>
+    </div>
+  </div>
+</div>
+
+<!-- PREFILL TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──
+const GROUPS = [
+  {num:512,name:"Real Estate Owners & Managers",ann:"1/1",disc2026:30.0,disc2025:30.0,div2026p:"~30–35%",div2025p:"~30–35%",div2024:35.0,div2023:32.5,div2022:30.0,div2021:25.0,div2020:25.0,disc:{2026:30,2025:30,2024:30,2023:25,2022:25,2021:25,2020:25},codes:["9026","9027","9028","9029"]},
+  {num:453,name:"Ornamental Horticulture & Floriculture",ann:"4/1",disc2026:30.0,disc2025:30.0,div2026p:"~35–40%",div2025p:"~35–40%",div2024:40.0,div2023:40.0,div2022:40.0,div2021:40.0,div2020:45.0,disc:{2026:30,2025:30,2024:30,2023:30,2022:20,2021:25,2020:25},codes:["0005","0035","0042","8001","8017","8018","0106"]},
+  {num:590,name:"United Ambulette Coalition",ann:"4/1",disc2026:30.0,disc2025:25.0,div2026p:"~20–25%",div2025p:"~20–25%",div2024:30.0,div2023:20.0,div2022:14.5,div2021:10.0,div2020:10.0,disc:{2026:30,2025:25,2024:25,2023:20,2022:20,2021:20,2020:20},codes:["8385","8394"]},
+  {num:572,name:"Select Manufacturers Assoc. of NY",ann:"5/1",disc2026:30.0,disc2025:30.0,div2026p:"~35–40%",div2025p:"~35–40%",div2024:40.0,div2023:40.0,div2022:35.0,div2021:32.5,div2020:32.5,disc:{2026:30,2025:30,2024:30,2023:25,2022:25,2021:25,2020:25},codes:["2790","3076","3113","3114","3122","3129","3132","3145","3629","3632"]},
+  {num:455,name:"Plumbing, Heating & Mechanical",ann:"5/1",disc2026:32.5,disc2025:25.0,div2026p:"~25–30%",div2025p:"~25–30%",div2024:30.0,div2023:25.0,div2022:25.0,div2021:25.0,div2020:25.0,disc:{2026:32.5,2025:25,2024:25,2023:25,2022:25,2021:25,2020:25},codes:["3726","5183","5184","5188","5193","5536","5538","8111","8350","9402"]},
+  {num:563,name:"Auto & Recreational Vehicle Dealers",ann:"5/31",disc2026:30.0,disc2025:30.0,div2026p:"~35–40%",div2025p:"~35–40%",div2024:40.0,div2023:40.0,div2022:40.0,div2021:32.5,div2020:27.5,disc:{2026:30,2025:30,2024:30,2023:30,2022:30,2021:25,2020:25},codes:["7999","8391","8748"]},
+  {num:588,name:"Trucking Association of NY (TANY)",ann:"7/1",disc2026:30.0,disc2025:25.0,div2026p:"~25–30%",div2025p:"~25–30%",div2024:30.0,div2023:25.0,div2022:25.0,div2021:20.0,div2020:20.0,disc:{2026:30,2025:25,2024:25,2023:25,2022:25,2021:25,2020:20},codes:["7197","7219","7231","8292","8293"]},
+  {num:309,name:"Sanitation & Recycling Industries",ann:"7/1",disc2026:32.5,disc2025:25.0,div2026p:"~25–30%",div2025p:"~25–30%",div2024:30.0,div2023:25.0,div2022:25.0,div2021:20.0,div2020:20.0,disc:{2026:32.5,2025:25,2024:30,2023:25,2022:25,2021:20,2020:20},codes:["2211","4239","7590","8018","8103","8263","8264","8265","9403"]},
+  {num:489,name:"Electrical Industries of NYS",ann:"11/1",disc2026:32.5,disc2025:32.5,div2026p:"~30–35%",div2025p:"~32.5–35%",div2024:32.5,div2023:30.0,div2022:25.0,div2021:25.0,div2020:20.0,disc:{2026:32.5,2025:32.5,2024:32.5,2023:25,2022:25,2021:25,2020:25},codes:["3064","3643","3724","3737","4112","5160","5190","5191","7536","7538","7539","7600","7601","7998","7999","8017","8018","8901","9519","9549"]},
+  {num:82,name:"The Apparel Industry of NYS",ann:"12/1",disc2026:32.5,disc2025:32.5,div2026p:"~25–30%",div2025p:"~25–30%",div2024:30.0,div2023:47.5,div2022:50.0,div2021:50.0,div2020:45.0,disc:{2026:32.5,2025:32.5,2024:30,2023:25,2022:25,2021:25,2020:25},codes:["2362","2388","2501","2503","2534","2553","2688","2689","8032","8747"]}
+];
+
+const CLASS_CODES = [
+  ["0005","Nursery Employees & Drivers","453"],["0035","Florists Cultivate or Garden & Drivers","453"],
+  ["0042","Landscape Gardening & Drivers","453"],["0106","Tree Pruning","453"],
+  ["2211","Cotton Batting / Wadding / Waste Mfg","309"],["2362","Knit Goods Manufacturing","82"],
+  ["2388","Embroidery Manufacturing","82"],["2501","Clothing Manufacturing","82"],
+  ["2503","Dress Making or Tailoring Custom","82"],["2534","Feather or Flower Mfg - Artificial","82"],
+  ["2553","Furnishing Goods Manufacturing","82"],["2688","Leather Goods Mfg NOC (belts)","82"],
+  ["2689","Pocket Book Mfg (leather or fabric)","82"],["2790","Pattern Making NOC / Pipe Mfg-Wood","572"],
+  ["3064","Sign Mfg - Metal","489"],["3076","Fireproof Equip MFG / Furniture Mfg-Metal","572"],
+  ["3113","Tool Mfg NOC - Not Forged","572"],["3114","Tool Mfg NOC - Forged/Machining","572"],
+  ["3122","Cutlery Mfg NOC / Razor Mfg NOC","572"],["3129","Buckle Mfg-Metal / Metal-Stamped Products","572"],
+  ["3132","Nut or Bolt Mfg / Spike Mfg","572"],["3145","Screw Mfg / Auto Screw Mach Products","572"],
+  ["3629","Machine Shop (alternate)","572"],["3632","Machine Shop NOC / Shipbuilding","572"],
+  ["3643","Electric Power/Transmission Equip Mfg","489"],["3724","Machinery Erection & Repairs & Drivers","489"],
+  ["3726","Boiler Tank Installation & Repair","455"],["3737","Electrical Apparatus Repair or Service","489"],
+  ["4112","Incandescent Lamp Mfg","489"],["4239","Paper Manufacturing","309"],
+  ["5160","Elevator Erection or Repair","489"],["5183","Plumbing","455"],
+  ["5184","Steam Pipe & Boiler Installation","455"],["5188","Automatic Sprinkler Installation","455"],
+  ["5190","Electrical Wiring Within Building","489"],["5191","Office Machine Installation or Repair","489"],
+  ["5193","Oil or Gas Burner Install/Service/Repair","455"],["5536","Heating Air Conditioning Duct Work","455"],
+  ["5538","Sheet Metal Work - Erection/Repair","455"],["7197","Parcel/Package Delivery-Truckmen NOC","588"],
+  ["7219","Truckmen NOC","588"],["7231","Messengers NOC","588"],
+  ["7536","Cable Installation in Conduits","489"],["7538","Electric Light or Power Line Construction","489"],
+  ["7539","Electric Light or Power Company","489"],["7590","Garbage Works-Reduction/Incineration","309"],
+  ["7600","Telephone or Telegraph Co.","489"],["7601","Telephone/Telegraph/Fire Alarm Construction","489"],
+  ["7998","Hardware Stores - Retail","489"],["7999","Hardware Stores Wholesale","563"],
+  ["8001","Florist Store & Drivers","453"],["8017","Retail Store NOC / Laundry / Dry Cleaning","453"],
+  ["8018","Wholesale Store NOC","309"],["8032","Wearing Apparel Stores","82"],
+  ["8103","Clipping Dealers","309"],["8111","Plumbers Supply Dealers","455"],
+  ["8263","Junk Dealers Etc.","309"],["8264","Paper Stock & Rag Dealers","309"],
+  ["8265","Iron or Steel Dealers Etc.","309"],["8292","Storage Warehouse - General","588"],
+  ["8293","Storage Warehouse - Furniture","588"],["8350","Gasoline or Oil Dealers & Drivers","455"],
+  ["8385","Ambulette Company","590"],["8391","Auto Sales / Repair / Body Shops / Gas Station","563"],
+  ["8394","Bus Company","590"],["8747","Showroom Salespersons","82"],
+  ["8748","Auto Salespersons","563"],["8901","Telephone or Telegraph Co. - Office","489"],
+  ["9026","Building Ops-Commercial","512"],["9027","Bldg Ops-One Story Commercial","512"],
+  ["9028","Building Ops NOC-Dwelling","512"],["9029","Buildings NOC-Repair Only","512"],
+  ["9402","Street or Sewer Cleaning","455"],["9403","Garbage Collecting","309"],
+  ["9519","Household Appliance Repair","489"],["9549","Advertising Companies Outdoor","489"]
+];
+
+// ── STATE ──
+let prefill = {groupNum:'',groupName:'',classCode:'',premium:''};
+
+// ── TABS ──
+function showTab(name, el) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('sc-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── RADIO BUTTONS ──
+function toggleRadio(el, thisId, otherId) {
+  el.classList.toggle('on');
+  const siblings = el.parentElement.querySelectorAll('.rbtn');
+  siblings.forEach(s => { if(s !== el) s.classList.remove('on'); });
+}
+function getRadioVal(yesId) {
+  const yBtn = document.querySelector(`[onclick*="${yesId}"]`);
+  if (!yBtn) return '—';
+  return yBtn.classList.contains('on') ? 'Yes' : 'No';
+}
+
+// ── FINDER ──
+function onBizChange() {
+  const v = document.getElementById('sel-biz').value;
+  if (v) { document.getElementById('inp-code').value = v; runFinder(); }
+}
+
+function runFinder() {
+  const code = String(document.getElementById('inp-code').value).trim();
+  const prem = parseFloat(document.getElementById('inp-prem').value) || 0;
+  const sb   = document.getElementById('status-bar');
+  const res  = document.getElementById('results');
+
+  if (!code || code.length < 4) {
+    sb.className = 'status-bar neutral';
+    sb.innerHTML = '<span>◈</span><span>Enter a 4-digit class code to find eligible groups.</span>';
+    res.innerHTML = ''; return;
+  }
+
+  const matched = GROUPS.filter(g => g.codes.includes(code));
+
+  if (!matched.length) {
+    sb.className = 'status-bar error';
+    sb.innerHTML = `<span>✖</span><span>No group fit for code <strong>${code}</strong>. Consider standard market.</span>`;
+    res.innerHTML = ''; return;
+  }
+
+  sb.className = 'status-bar success';
+  sb.innerHTML = `<span>✔</span><span><strong>${matched.length} eligible group${matched.length>1?'s':''}</strong> found for code <strong>${code}</strong>.</span>`;
+
+  res.innerHTML = matched.map((g,i) => {
+    let savings = '';
+    if (prem >= 2500) {
+      const disc = (prem * g.disc2026 / 100).toFixed(0);
+      const net  = prem - parseFloat(disc);
+      const divE = (net * g.div2024 / 100).toFixed(0);
+      const tot  = (parseFloat(disc) + parseFloat(divE)).toFixed(0);
+      savings = `
+        <div class="savings-box">
+          <div class="stitle2">💰 Illustrative Savings on $${Number(prem).toLocaleString()} Submitted Premium</div>
+          <div class="srow"><span class="srow-lbl">Upfront Discount (${g.disc2026}%)</span><span class="srow-val">$${Number(disc).toLocaleString()}</span></div>
+          <div class="srow"><span class="srow-lbl">Est. Dividend (on net prem)</span><span class="srow-val">~$${Number(divE).toLocaleString()}</span></div>
+          <div class="srow stotal"><span class="srow-lbl" style="font-weight:700">Combined Savings</span><span class="srow-val" style="font-size:16px">~$${Number(tot).toLocaleString()}</span></div>
+          <div class="sdisclaimer"><span style="flex-shrink:0">⚠</span><span><strong>These figures are estimates only,</strong> based on the premium you entered and current group discount &amp; dividend history. Actual discount and dividend values are subject to underwriting and will be confirmed if and when a formal quote is issued by NYSIF. Past dividends do not guarantee future results.</span></div>
+        </div>`;
+    }
+    const chips = g.codes.map(c => `<span class="chip ${c===code?'hit':''}">${c}</span>`).join('');
+    return `
+      <div class="gcard" style="animation-delay:${i*0.07}s">
+        <div class="gcard-top">
+          <div class="gnum">${g.num}</div>
+          <div><div class="gname">${g.name}</div><div class="gann">Anniversary: ${g.ann}</div></div>
+        </div>
+        <div class="metrics-grid">
+          <div class="mtile"><div class="mlbl">2026 Discount</div><div class="mval green">${g.disc2026}%</div><div class="msub">Upfront at binding</div></div>
+          <div class="mtile"><div class="mlbl">2025 Discount</div><div class="mval">${g.disc2025}%</div><div class="msub">Prior year</div></div>
+          <div class="mtile"><div class="mlbl">2026 Div. (Proj.)</div><div class="mval green">${g.div2026p}</div><div class="msub">Projected</div></div>
+          <div class="mtile"><div class="mlbl">2024 Dividend</div><div class="mval">${g.div2024}%</div><div class="msub">Declared</div></div>
+        </div>
+        <div class="gfoot">
+          ${savings}
+          <div class="codes-lbl">Eligible Codes <span style="font-weight:400;color:#b0bdc8">(matched highlighted)</span></div>
+          <div class="chips">${chips}</div>
+          <div style="border-top:1px solid var(--border);padding-top:10px;">
+            <button class="start-btn" onclick="startIntake('${g.num}','${g.name.replace(/'/g,"\\'")}','${code}','${prem}')">
+              📝 Start Intake — Group ${g.num}
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── START INTAKE ──
+function startIntake(num, name, code, prem) {
+  prefill = {groupNum:num, groupName:name, classCode:code, premium:prem};
+  // Switch tab
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('sc-intake').classList.add('active');
+  document.querySelectorAll('.tab-item')[4].classList.add('active');
+  // Pre-fill ops
+  const ops = document.getElementById('if-ops');
+  if (ops && !ops.value) ops.value = `Eligible for Safety Group ${num} — ${name} (Class Code: ${code})${prem>0?'\nEst. Annual Premium: $'+Number(prem).toLocaleString():''}`;
+  // Pre-fill first payroll row
+  const firstCode = document.querySelector('#pay-body tr input');
+  if (firstCode && !firstCode.value) firstCode.value = code;
+  // Toast
+  showToast(`✔ Pre-filled — Group ${num} · Code ${code}`);
+  // Scroll top
+  document.getElementById('sc-intake').scrollTop = 0;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── MATRIX ──
+function buildMatrix() {
+  document.getElementById('matrix-list').innerHTML = GROUPS.map(g => `
+    <div class="mxcard">
+      <div class="mxhd">
+        <div class="mxnum">${g.num}</div>
+        <div class="mxname">${g.name}</div>
+        <div class="mxann">${g.ann}</div>
+      </div>
+      <div class="mxstats">
+        <div class="mxst"><div class="mxst-lbl">2026 Disc.</div><div class="mxst-val green">${g.disc2026}%</div></div>
+        <div class="mxst"><div class="mxst-lbl">2026 Div.</div><div class="mxst-val green">${g.div2026p}</div></div>
+        <div class="mxst"><div class="mxst-lbl">2024 Div.</div><div class="mxst-val">${g.div2024}%</div></div>
+      </div>
+      <div class="mxcodes">${g.codes.join('  ·  ')}</div>
+    </div>`).join('');
+}
+
+// ── HISTORY ──
+const DIV_DATA = {
+  512:{2026:'TBD',2025:'TBD',2024:35,2023:32.5,2022:30,2021:25,2020:25},
+  453:{2026:'TBD',2025:'TBD',2024:40,2023:40,2022:40,2021:40,2020:45},
+  590:{2026:'TBD',2025:'TBD',2024:30,2023:20,2022:14.5,2021:10,2020:10},
+  572:{2026:'TBD',2025:'TBD',2024:40,2023:40,2022:35,2021:32.5,2020:32.5},
+  455:{2026:'TBD',2025:'TBD',2024:30,2023:25,2022:25,2021:25,2020:25},
+  563:{2026:'TBD',2025:'TBD',2024:40,2023:40,2022:40,2021:32.5,2020:27.5},
+  588:{2026:'TBD',2025:'TBD',2024:30,2023:25,2022:25,2021:20,2020:20},
+  309:{2026:'TBD',2025:'TBD',2024:30,2023:25,2022:25,2021:20,2020:20},
+  489:{2026:'TBD',2025:'TBD',2024:32.5,2023:30,2022:25,2021:25,2020:20},
+  82: {2026:'TBD',2025:'TBD',2024:30,2023:47.5,2022:50,2021:50,2020:45}
+};
+const YRS = [2026,2025,2024,2023,2022,2021,2020];
+
+function buildHistory() {
+  document.getElementById('history-list').innerHTML = GROUPS.map(g => {
+    const dRow = YRS.map(y => { const v=g.disc[y]; return `<td class="hdisc">${v}%</td>`; }).join('');
+    const vRow = YRS.map(y => { const v=DIV_DATA[g.num][y]; return v==='TBD'?`<td class="htbd">TBD</td>`:`<td class="hdiv">${v}%</td>`; }).join('');
+    const ths  = YRS.map(y=>`<th>${y}</th>`).join('');
+    return `
+      <div class="hxcard">
+        <div class="hxhd"><div class="hxnum">${g.num}</div><div class="hxname">${g.name}</div><div class="hxann">${g.ann}</div></div>
+        <div class="hxbody">
+          <table class="htable">
+            <thead><tr><th></th>${ths}</tr></thead>
+            <tbody>
+              <tr><td>Discount</td>${dRow}</tr>
+              <tr><td>Dividend</td>${vRow}</tr>
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── CLASS CODE REF ──
+function getGrpName(num) {
+  const g = GROUPS.find(g=>String(g.num)===String(num));
+  return g ? `Group ${g.num} — ${g.name}` : `Group ${num}`;
+}
+function renderRef(data) {
+  document.getElementById('ref-count').textContent = `${data.length} class codes`;
+  document.getElementById('ref-list').innerHTML = data.map(r => `
+    <div class="ref-item">
+      <div class="rcode">${r[0]}</div>
+      <div class="rinfo">
+        <div class="rdesc">${r[1]}</div>
+        <div class="rgrp">${getGrpName(r[2])}</div>
+      </div>
+    </div>`).join('');
+}
+function filterRef() {
+  const q = document.getElementById('ref-search').value.toLowerCase();
+  renderRef(CLASS_CODES.filter(r => r[0].includes(q) || r[1].toLowerCase().includes(q) || getGrpName(r[2]).toLowerCase().includes(q)));
+}
+
+// ── INTAKE DYNAMIC ROWS ──
+function addOwner() {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><input type="text" placeholder="Name"></td><td><input type="text" placeholder="Title"></td><td><input type="email" placeholder="Email" inputmode="email"></td><td><input type="tel" placeholder="Phone"></td><td><input type="text" placeholder="$0"></td><td><select><option>—</option><option>Included</option><option>Excluded</option></select></td>`;
+  document.getElementById('own-body').appendChild(tr);
+}
+function addPayroll() {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><input type="text" placeholder="0000" inputmode="numeric" maxlength="4" style="width:58px"></td><td><input type="text" placeholder="Description"></td><td><input type="text" placeholder="$0" inputmode="numeric"></td><td><input type="text" placeholder="0" inputmode="numeric" style="width:44px"></td>`;
+  document.getElementById('pay-body').appendChild(tr);
+}
+
+// ── PDF / SHARE ──
+function doShare() {
+  if (navigator.share) {
+    navigator.share({ title: 'AWCIS Intake Form', text: 'NYS Safety Group Business Intake Form', url: window.location.href })
+      .catch(() => window.print());
+  } else { window.print(); }
+}
+
+// ── EMAIL DRAFT ──
+function generateEmail() {
+  const g = id => (document.getElementById(id)||{}).value||'';
+  const bizName  = g('if-bizname') || '[Business Name]';
+  const producer = g('if-producer')|| '[Producer]';
+  const comm     = g('if-commission');
+  const fein     = g('if-fein')    || '[FEIN]';
+  const effDate  = g('if-effdate') || '[Effective Date]';
+  const expMod   = g('if-expmod')  || '[Exp Mod]';
+  const years    = g('if-years');
+  const phone    = g('if-phone')   || '[Phone]';
+  const email    = g('if-email')   || '[Email]';
+
+  const groupInfo = prefill.groupNum
+    ? `  Target Safety Group:  Group ${prefill.groupNum} — ${prefill.groupName}\n  Governing Class Code: ${prefill.classCode}${prefill.premium>0?'\n  Est. Annual Premium:  $'+Number(prefill.premium).toLocaleString():''}\n\n`
+    : '';
+
+  const body =
+`To the NYS Safety Group Placement Team,
+
+Please see the completed intake form attached to this email as a PDF.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUBMISSION OVERVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${groupInfo}  Business Name:       ${bizName}
+  Federal Tax ID:      ${fein}
+  Effective Date:      ${effDate}
+  Experience Mod:      ${expMod}${years?'\n  Years in Business:   '+years:''}
+
+  Producer:            ${producer}${comm?' ('+comm+'% commission)':''}
+
+BUSINESS CONTACT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Phone: ${phone}
+  Email: ${email}
+
+The full intake form, ownership data, payroll by class code, and description of operations are included in the attached PDF. Supporting documents (loss runs, WC audits / NYS45s) will follow or are included with this submission.
+
+Please let me know if anything additional is needed.
+
+Thank you,
+${producer}`;
+
+  document.getElementById('modal-meta').innerHTML = `
+    <div class="mm-item"><label>To</label><span>nysafetygroupsubmissions@acrisure.com</span></div>
+    <div class="mm-item"><label>Subject</label><span>NYS SG Submission — ${bizName}</span></div>
+    <div class="mm-item"><label>CC</label><span>rsawh@acrisure.com</span></div>
+    <div class="mm-item"><label>Business</label><span>${bizName}</span></div>`;
+  document.getElementById('email-preview').textContent = body;
+  window._body    = body;
+  window._subject = `NYS Safety Group Submission — ${bizName}`;
+  document.getElementById('email-modal').classList.add('open');
+}
+
+function openMail() {
+  const s = encodeURIComponent(window._subject||'NYS Safety Group Submission');
+  const b = encodeURIComponent(window._body||'');
+  window.location.href = `mailto:nysafetygroupsubmissions@acrisure.com?cc=rsawh@acrisure.com&subject=${s}&body=${b}`;
+}
+function copyEmail() {
+  navigator.clipboard.writeText(window._body||'').then(()=>{
+    const f = document.getElementById('copied-flash');
+    f.classList.add('show');
+    setTimeout(()=>f.classList.remove('show'),2000);
+  });
+}
+function closeModal() { document.getElementById('email-modal').classList.remove('open'); }
+
+// ── INIT ──
+buildMatrix();
+buildHistory();
+renderRef(CLASS_CODES);
+for(let i=0;i<4;i++) addOwner();
+for(let i=0;i<5;i++) addPayroll();
+</script>
+</body>
+</html>
